@@ -26,7 +26,7 @@ def create_app(test_config=None):
     
     from .db import db
     db.init_app(app)
-
+    # Registering the api
     app.register_blueprint(api_bp, url_prefix="/api")
-    
+
     return app
