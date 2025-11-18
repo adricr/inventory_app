@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask
-
+from .api.routes import *
 
 def create_app(test_config=None):
     # create and configure the app
@@ -23,14 +23,10 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
-
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        print(app.instance_path)
-        return 'Hello, World!'
     
     from .db import db
     db.init_app(app)
 
+    app.register_blueprint(api_bp, url_prefix="/api")
+    
     return app
