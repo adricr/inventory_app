@@ -121,7 +121,7 @@ def delete_property(id):
         close_db()
         return not_found(f"Property with id: {id}")
     else:
-        if get_all_rooms(id)[1] == 204: #Check that there are no rooms 
+        if get_all_rooms_from_property(id)[1] == 204: #Check that there are no rooms 
             db_cursor.execute(f"""DELETE FROM property WHERE id = {id}""")
             db_con.commit()
             close_db()
