@@ -323,7 +323,7 @@ def create_item(room_id):
 
 
 """
-Definition for route to get all ROOMS IN A PROPERTY, the fetch could be like:
+Definition for route to get all items IN A room, the fetch could be like:
 fetch("http://127.0.0.1:5000/api/room/2/item")
   .then(response => {
     if (!response.ok) {
@@ -359,7 +359,7 @@ def get_all_items_from_room(room_id):
         return jsonify({"message": f"Room {room_id} does not exist"}), 404
     
 """
-Definition for route to create a room in a property, the fetch could be like:
+Definition for route to delete an item in a room, the fetch could be like:
 fetch("http://127.0.0.1:5000/api/room/2/item/2", {
     method: "DELETE"
 })
