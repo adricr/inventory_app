@@ -197,7 +197,7 @@ fetch("http://127.0.0.1:5000/api/property/2/room")
 
 """
 @api_bp.route('property/<int:property_id>/room', methods=['GET'])
-def get_all_rooms(property_id):
+def get_all_rooms_from_property(property_id):
     db_con = get_db()
     db_cursor = db_con.cursor()
     db_cursor.execute(f"""SELECT * FROM property WHERE id ={property_id}""")
@@ -270,6 +270,128 @@ def delete_room(property_id, room_id):
             # Could this have been made easier with a join??? ABSOLUTELY BUT I LOVE TECHNICAL DEBT
 
 # /////////////////--ITEMS--\\\\\\\\\\\\\\\\\
+"""
+Definition for route to create an item in a room, the fetch could be like:
+fetch("http://127.0.0.1:5000/api/room/2/item", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+    room_id: 2,
+    name: "Television",
+    description: "a 55\" television",
+    image_url: null
+    })
+})
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log(data);
+  })
+  .catch(error => {
+    console.error("Fetch error:", error);
+  });
+
+"""
+@api_bp.route('room/<int:room_id>/item', methods=['POST'])
+def create_item(room_id):
+    data = request.get_json()
+    db_con = get_db()
+    db_cursor = db_con.cursor()
+    db_cursor.execute(f"""SELECT * FROM room WHERE id ={room_id}""")
+    room = db_cursor.fetchone()
+    if room is None:
+        close_db()
+        return jsonify({"message":"Room not found"}), 404
+    else:
+        db_cursor.execute(""" INSERT INTO item (room_id, name, description, image_url)
+                VALUES (?, ?, ?, ?)""",(
+                (room_id),
+                (data["name"]),
+                (data["description"]),
+                (data["image_url"])
+                ))
+        db_con.commit()
+        new_id = db_cursor.lastrowid
+        close_db()
+        return jsonify({"id": new_id, "room_id": room_id, **data}), 201
+
+
+"""
+Definition for route to get all ROOMS IN A PROPERTY, the fetch could be like:
+fetch("http://127.0.0.1:5000/api/room/2/item")
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log(data);
+  })
+  .catch(error => {
+    console.error("Fetch error:", error);
+  });
+
+"""
+@api_bp.route('room/<int:room_id>/item', methods=['GET'])
+def get_all_items_from_room(room_id):
+    db_con = get_db()
+    db_cursor = db_con.cursor()
+    #Check the room exists
+    db_cursor.execute(f"""SELECT count(*) FROM room WHERE id = {room_id}""")
+    room_exists = bool(dict(db_cursor.fetchone()).get('count(*)')) #if count is 1 or more it will be true
+    if room_exists:
+        db_cursor.execute(f"""SELECT * FROM item WHERE room_id ={room_id}""")
+        items = rows_to_dict(db_cursor.fetchall())
+        close_db()
+        if items:
+            return jsonify(items), 200
+        else:
+            return jsonify({"message": "No items found"}), 204
+    else:
+        close_db()
+        return jsonify({"message": f"Room {room_id} does not exist"}), 404
+    
+"""
+Definition for route to create a room in a property, the fetch could be like:
+fetch("http://127.0.0.1:5000/api/room/2/item/2", {
+    method: "DELETE"
+})
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log(data);
+  })
+  .catch(error => {
+    console.error("Fetch error:", error);
+  });
+
+"""
+@api_bp.route('room/<int:room_id>/item/<int:item_id>', methods=['DELETE'])
+def delete_item(room_id,item_id):
+    db_con = get_db()
+    db_cursor = db_con.cursor()
+    db_cursor.execute(f"""SELECT * FROM item WHERE id ={item_id} AND room_id={room_id}""")
+    item = db_cursor.fetchone()
+    if item is None:
+        close_db()
+        return jsonify({"message":"item not found"}), 404
+    else:
+        db_cursor.execute(f"""DELETE FROM item WHERE id={item_id} AND room_id={room_id}""")
+        db_con.commit()
+        close_db()
+        return jsonify({"message":f"Item {item_id} Deleted Successfully"}), 204
+
 # /////////////////--HELPER METHODS--\\\\\\\\\\\\\\\\\ 
 # Helper method to create dictionaries from rows
 def rows_to_dict(rows):
