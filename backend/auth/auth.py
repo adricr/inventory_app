@@ -95,8 +95,32 @@ def login_user():
             user_token = jwt.encode(jwt_payload,getenv("JWT_SECRET_KEY"),"HS256")
             return jsonify({"token": user_token}), 200
 
-
-@auth_bp.route('/test', methods=['POST'])
+"""
+fetch("http://127.0.0.1:5000/testtoken",
+{
+method: "POST",
+headers: {"Content-type": "application/json",
+"Auth":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ1c2VybmFtbyIsImVtYWlsIjoiZW1haWxAZW1haWwuY29tIiwidHlwZSI6IlVTRVIiLCJleHAiOjE3NjM4MzE2NjZ9.u4nmT7zY6BRQpOnGS_UcugJP8wU8b5YhphI4OBS328M" 
+},
+body: JSON.stringify(
+    {
+        password: "1Password!",
+        email: "email@email.com"
+    })
+}).then(response => {
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log(data);
+  })
+  .catch(error => {
+    console.error("Fetch error:", error);
+  });
+"""
+@auth_bp.route('/testtoken', methods=['POST'])
 def test_token():
     data = request.headers
     return jsonify({"isAuthorized": is_user_authorized(data['Auth'],"USER")}), 200
@@ -134,7 +158,9 @@ Decodes a jwt token returning who the user is
 def decode_user_token(token):
     return jwt.decode(token,getenv("JWT_SECRET_KEY"),"HS256",options={"require":["exp"],"verify_exp": True})
 
-
+"""
+Checks if an user is authorized for an action
+"""
 def is_user_authorized(token, user_type):
     try:
         user = jwt.decode(token,getenv("JWT_SECRET_KEY"),"HS256",options={"require":["exp"],"verify_exp": True})
