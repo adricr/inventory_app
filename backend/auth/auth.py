@@ -95,6 +95,13 @@ def login_user():
             user_token = jwt.encode(jwt_payload,getenv("JWT_SECRET_KEY"),"HS256")
             return jsonify({"token": user_token}), 200
 
+
+@auth_bp.route('/test', methods=['POST'])
+def test_token():
+    data = request.headers
+    return jsonify({"isAuthorized": is_user_authorized(data['Auth'],"USER")}), 200
+
+
 # Helper methods
 """
 Checks if the email is in the db
@@ -126,3 +133,15 @@ Decodes a jwt token returning who the user is
 """
 def decode_user_token(token):
     return jwt.decode(token,getenv("JWT_SECRET_KEY"),"HS256",options={"require":["exp"],"verify_exp": True})
+
+
+def is_user_authorized(token, user_type):
+    try:
+        user = jwt.decode(token,getenv("JWT_SECRET_KEY"),"HS256",options={"require":["exp"],"verify_exp": True})
+
+        if user.get('type') == user_type and get_user(user.get('email')): #Check that the type is correct and the user is in the db, just to make it really secure
+            return True
+        else: 
+            return False
+    except:
+        return False
