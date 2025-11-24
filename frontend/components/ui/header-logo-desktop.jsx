@@ -1,6 +1,7 @@
 import Image from "next/image";
 import * as React from "react";
 import { Turret_Road } from 'next/font/google';
+import Link from "next/link";
 const turret_road = Turret_Road(
     {
         subsets: ['latin'],
@@ -22,8 +23,11 @@ export default function HeaderLogoDesktop(props)
         );
     else 
         return(
-            <div className={`${props.className} ${turret_road.className} text-5xl py-4 text-center text-orange-300`}>
-                Inventory App
-            </div>
+            <Link href={`/`}>            
+                <div className={`${props.className} ${turret_road.className} text-5xl py-4 text-center text-orange-300`}>
+                    Inventory App
+                </div>
+            </Link>
+
     );
 }

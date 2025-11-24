@@ -22,7 +22,7 @@ function Header(){
             <NavigationMenuList>
                 <NavigationMenuItem>
                     <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                        <Link href="/dashboard">Dashboard</Link>
+                        <Link href="/">Dashboard</Link>
                     </NavigationMenuLink>
                 </NavigationMenuItem>
 
