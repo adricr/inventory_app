@@ -48,17 +48,19 @@ export default function Properties(){
                 setLoading(false)
             })
             .catch(error => {
+                setLoading(false)
+                setProperties({error: `There's an issue with the backend!`})
                 console.error("Fetch error:", error);
             });
     },[])
 
     if(isLoading) return <div>Getting properties...</div>
     if(!properties) return <div>There seems to be no properties...</div>
-
+    if(properties.error) return(<div className="text-xl font-semibold text-center p-3 text-red-700">{properties.error}</div>)
     return(
         <div className=" flex flex-col items-center">
             {properties.map(property=> 
-            <Card className={`my-5 w-1/2`}>
+            <Card key={property.id} className={`my-5 w-1/2`}>
                 <CardHeader>
                     <Image href={`${property.image_url}`}></Image>
                 </CardHeader>

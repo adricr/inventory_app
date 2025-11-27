@@ -14,7 +14,6 @@ import Link from "next/link";
 import { Button } from "./button";
 import Rooms from "./rooms";
 export default function Property(props){
-    console.log(props.propertyId)
     if (props.propertyId){
     const [property, setProperty]= useState(null);
     const[isPropertyLoading, setPropertyLoading] = useState(true);
@@ -32,13 +31,18 @@ export default function Property(props){
                 setPropertyLoading(false)
             })
             .catch(error => {
+                setPropertyLoading(false)
+                setProperty({error: `There's an issue with the backend!`})
                 console.error("Fetch error:", error);
             });
     },[])
     if (isPropertyLoading) return <div>Property loading...</div>
     if (!property) return <div>This property does not exist...</div>
-    if(property.error) return <div className="text-xl text-center p-3">{`${property.error}`}</div>
-    console.log(property)
+    if(property.error) return (<>
+    <div className="text-xl font-semibold text-center p-3 text-red-700">{`${property.error}`}</div>
+    <Link className="text-center text-5xl font-black text-green-500" href={`/property`}>See Properties</Link>
+    </>
+    )
     if(property.image_url){
         return (
             <Card>
@@ -57,9 +61,11 @@ export default function Property(props){
                     </div>
                 </CardHeader>
                 <CardContent >
-                    <div className="text-4xl text-center font-semibold">Rooms</div>
                     <Rooms propertyId={props.propertyId}></Rooms>
                 </CardContent>
+                <CardFooter className={`flex justify-end`}>
+                    <Button variant={`destructive`}>Delete Property</Button>
+                </CardFooter>
             </Card>
         )
     }
