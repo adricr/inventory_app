@@ -13,11 +13,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "./button";
 import Rooms from "./rooms";
+import DeleteDialog from "./deletedialog";
 export default function Property(props){
     if (props.propertyId){
     const [property, setProperty]= useState(null);
     const[isPropertyLoading, setPropertyLoading] = useState(true);
-    useEffect(()=>{
+    function getProperty(){
         fetch(`http://localhost:5000/api/property/${props.propertyId}`)
             .then(response => {
                 if (!response.ok) {
@@ -35,6 +36,9 @@ export default function Property(props){
                 setProperty({error: `There's an issue with the backend!`})
                 console.error("Fetch error:", error);
             });
+    }
+    useEffect(()=>{
+        getProperty()
     },[])
     if (isPropertyLoading) return <div>Property loading...</div>
     if (!property) return <div>This property does not exist...</div>
@@ -43,7 +47,6 @@ export default function Property(props){
     <Link className="text-center text-5xl font-black text-green-500" href={`/property`}>See Properties</Link>
     </>
     )
-    if(property.image_url){
         return (
             <Card>
                 <CardHeader className={`grid grid-cols-2 items-center`}>
@@ -64,11 +67,13 @@ export default function Property(props){
                     <Rooms propertyId={props.propertyId}></Rooms>
                 </CardContent>
                 <CardFooter className={`flex justify-end`}>
-                    <Button variant={`destructive`}>Delete Property</Button>
+                    <DeleteDialog  refresh={getProperty} item={property} itemType={`Property`}>
+                        <Button variant={`destructive`}>Delete Property</Button>
+                    </DeleteDialog>
                 </CardFooter>
             </Card>
         )
-    }
+    
 
     }
     

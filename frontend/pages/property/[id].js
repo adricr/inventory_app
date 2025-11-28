@@ -7,9 +7,7 @@ export default function Property_id(){
     <>
     <h1 className="text-center text-4xl font-black pb-5">Property {`${propertyId}`}</h1>
     <Property propertyId={propertyId}>
-        {/* <Rooms propertyId={propertyId}>
-            <Items roomId={roomId}/>
-        </Rooms> */}
+
     </Property>
     </>)
 }
