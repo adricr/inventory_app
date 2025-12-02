@@ -30,32 +30,7 @@ export default function Rooms({propertyId}){
                         setRooms({error: `There's an issue with the backend!`})
                     });
     }
-    function handleSubmit(e){
-        e.preventDefault();
-        const form = new FormData(e.target);
-        const formData = Object.fromEntries(form) 
-        console.log(formData)
-        try{
-            fetch(`http://localhost:5000/api/room`,{
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json"
-            },
-            body: JSON.stringify(formData)
-            })                                                                                                               
-            .then(res =>{
-                if (res.ok){
-                    getRooms()
-                }
-
-            })
-            .then(data => console.log(data));
-        }
-        catch (error){
-            console.log(error)
-        }
-        
-    }
+    
     useEffect(() => {
         getRooms();
     }, [])

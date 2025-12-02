@@ -14,7 +14,6 @@ import { Button } from "./button";
 import DeleteDialog from "./deletedialog";
 import AddDialog from "./add-dialog";
  export default function Room(props){
-    console.log(props.room)
     const [items, setitems] = useState()
     const [isLoading,setIsLoading]=useState(true)
     const [isError, setIsError] = useState(false)
@@ -42,7 +41,7 @@ import AddDialog from "./add-dialog";
     useEffect(() => {
         getItems()
     }, [])
-    console.log(` hi ${items}`)
+
     return (
     <Card>
         <CardHeader className={`grid grid-cols-2`}>

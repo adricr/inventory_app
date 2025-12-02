@@ -30,7 +30,6 @@ export default function property(){
     useEffect(()=>{
         getProperties();
     },[])
-     console.log(properties)
     return(
         <section className="grid grid-col-1 gap-2">
             <h1 className="text-center text-4xl font-black">Properties</h1>

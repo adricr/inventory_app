@@ -58,7 +58,6 @@ export default function DeleteDialog(props){
         
         
         } catch (error) {
-            console.log(error)
             setErrorDeleting(true);
             setDeletingError(error.message);
             setTextforTitle(<>{`Error deleting ${itemTyp} `}</>);

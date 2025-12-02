@@ -28,7 +28,6 @@ export default function Property(props){
             })
             .then(data => {
                 setProperty(data)
-                console.log(property)
                 setPropertyLoading(false)
             })
             .catch(error => {
