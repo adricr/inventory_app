@@ -2,8 +2,8 @@ import React from "react";
 
 export default function reports(){
     return(
-        <>
-        <div>reports</div>
-        </>
+        <section id="reports" className="text-center">
+            The report function is still under development!
+        </section>
     )
 }

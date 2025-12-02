@@ -68,96 +68,17 @@ export default function Rooms({propertyId}){
             <AddDialog itemType={`room`} refresh={getRooms} parentId={propertyId} >
                 <Button  className={` w-1/2`} size={`lg`}>Add a Room</Button>
             </AddDialog>
-            {/* <Dialog>
-                <div className="flex justify-center">
-                    <DialogTrigger asChild>
-                        <Button  className={` w-1/2`} size={`lg`}>Add a Room</Button>
-                    </DialogTrigger>
-                </div>
-                <DialogContent>
-                    <form onSubmit={handleSubmit}>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Create a new Room
-                            </DialogTitle>
-                            <DialogDescription>
-                                Create a new room with this form. Click Save when finished
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4">
-                                <Input type="hidden" id="property_id" name="property_id" value={propertyId} />
-                            <div className="grid gap-3">
-                                <Label htmlFor="name">Name</Label>
-                                <Input id="name" name="name" defaultValue="Kitchen" />
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="descr">Description</Label>
-                                <Input id="descr" name="descr" defaultValue="A well lit kitchen in need of painting" />
-                            </div>
-                        </div>
-                        <DialogFooter className={`py-2`}>
-                            <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                            </DialogClose>
-                            <DialogClose asChild>
-                                <Button  variant="outline" type={`submit`}>Save changes</Button>
-                            </DialogClose>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog> */}
         </section>
     )
-    console.log(rooms.length)
-    console.log(rooms)
     return(
         <section className="grid grid-cols-1 gap-4" id="rooms">
             <div className="text-center text-3xl font-semibold pb-2">Rooms</div>
             {rooms.map(room=>{
-                console.log(room)
                 return <Room room={room} refresh={getRooms} key={room.id}/>
             })}
             <AddDialog itemType={`room`} refresh={getRooms} parentId={propertyId} >
                 <Button  className={` w-1/2`} size={`lg`}>Add a Room</Button>
             </AddDialog>
-            {/* <Dialog>
-                <div className="flex justify-center">
-                    <DialogTrigger asChild>
-                        <Button  className={` w-1/2`} size={`lg`}>Add a Room</Button>
-                    </DialogTrigger>
-                </div>
-                <DialogContent>
-                    <form onSubmit={handleSubmit}>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Create a new Room
-                            </DialogTitle>
-                            <DialogDescription>
-                                Create a new room with this form. Click Save when finished
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4">
-                                <Input type="hidden" id="property_id" name="property_id" value={propertyId} />
-                            <div className="grid gap-3">
-                                <Label htmlFor="name">Name</Label>
-                                <Input id="name" name="name" defaultValue="Kitchen" />
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="descr">Description</Label>
-                                <Input id="descr" name="descr" defaultValue="A well lit kitchen in need of painting" />
-                            </div>
-                        </div>
-                        <DialogFooter className={`py-2`}>
-                            <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                            </DialogClose>
-                            <DialogClose asChild>
-                                <Button  variant="outline" type={`submit`}>Save changes</Button>
-                            </DialogClose>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog> */}
         </section>
     )
 

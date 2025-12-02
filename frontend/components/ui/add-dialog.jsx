@@ -20,41 +20,85 @@ export default function AddDialog(props){
     const [textforDescription, setTextforDescription] = useState()
     const [textforContent, setTextforContent] = useState()
     const [firstSet, setFirstSet] = useState(true)
+    function resetStates(){
+        setisItemAdded(false)
+        seterrorAdding(false)
+        setFirstSet(true)
+    }
     async function handleSubmit(e){
         e.preventDefault();
         const form = new FormData(e.target);
         const formData = Object.fromEntries(form);
-        if (props.itemType.toLowerCase() == "room"){
-            try {
-                const res = await fetch("http://localhost:5000/api/room", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(formData)
-                });
-
-                if (!res.ok) {
-                    setTextforTitle(<>{`Room could not be created`}</>);
-                    setTextforContent(<>{`Room was not created, please try again`}</>);
-                    seterrorAdding(true);
-                    throw new Error(`Response status: ${res.status}`);
-                }
-
-                const data = await res.json();
-
-                setTextforTitle(<>{`Room added successfully`}</>);
-                setTextforDescription(<></>)
-                setTextforContent(<div className="text-2xl font-semibold">
-                    {`There's now a ${data.name} in the property!`}
-                </div>);
-                setisItemAdded(true);
-                setTimeout(props.refresh,2000)
-                setTimeout(()=>{setFirstSet(true); setisItemAdded(false)},3000)
-            } catch (e) {
-                setaddingError("Something went wrong: " + e.message);
+        try {
+            const res = await fetch(`http://localhost:5000/api/${props.itemType.toLowerCase()}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            });
+            if (!res.ok) {
+                throw new Error(`Response status: ${res.status}`);
             }
+
+            const data = await res.json();
+            setTextforTitle(<>{`${props.itemType} added successfully`}</>);
+            setTextforDescription(<></>)
+            props.itemType.toLowerCase()!=`property` ? 
+            setTextforContent(<div className="text-2xl font-semibold">
+                {`A ${data.name} has been added!`}
+            </div>)
+            :
+            setTextforContent(<div className="text-2xl font-semibold">
+                {`A new property has been added!`}
+            </div>)
+            setisItemAdded(true);
+            setTimeout(props.refresh,2000)
+            setTimeout(()=>{setFirstSet(true); setisItemAdded(false)},3000)
+        } catch (e) {
+            setTextforTitle(<>{`${props.itemType} could not be created`}</>);
+            setTextforDescription(<></>)
+            setTextforContent(<>{`${props.itemType} was not created, please reload page and try again`}</>);
+            seterrorAdding(true);
+            setaddingError("Something went wrong: " + e.message);
         }
     }
-
+    // We Create here the form's inputs and dialog prompts for each type
+    // For Properties
+    if (props.itemType.toLowerCase() == `property` && firstSet){
+        setTextforTitle(<>{`Create a new ${props.itemType}`}</>)
+        setTextforDescription(<>{`Create a new ${props.itemType} with this form. Click Save when finished`}</>)
+        setTextforContent(<div className="grid gap-4">
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="number">Number</Label>
+                                        <Input id="number" name="number" defaultValue="13" required/>
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="street">Street</Label>
+                                        <Input id="street" name="street" defaultValue="Butcher Street" required/>
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="city">City</Label>
+                                        <Input id="city" name="city" defaultValue="Edinburgh" required/>
+                                    </div>
+                                        <div className="grid gap-3">
+                                        <Label htmlFor="postcode">Postcode</Label>
+                                        <Input id="postcode" name="postcode" defaultValue="EH12 1LA" required/>
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="image_url">Image of the property as URL</Label>
+                                        <Input id="image_url" name="image_url" defaultValue="" />
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="tenant">Tenant's Name</Label>
+                                        <Input id="tenant" name="tenant_name" defaultValue="John Smith" required/>
+                                    </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="landlord">Property owner's Name</Label>
+                                        <Input id="landlord" name="landlord_name" defaultValue="Jane Doe" required/>
+                                    </div>
+                                </div>)
+        setFirstSet(false)
+    }
+    // For Rooms
     if (props.itemType.toLowerCase() == "room" && firstSet){
         setTextforTitle(<>{`Create a new ${props.itemType}`}</>)
         setTextforDescription(<>{`Create a new ${props.itemType} with this form. Click Save when finished`}</>)
@@ -62,11 +106,32 @@ export default function AddDialog(props){
                                 <Input type="hidden" id="property_id" name="property_id" value={props.parentId} />
                             <div className="grid gap-3">
                                 <Label htmlFor="name">Name</Label>
-                                <Input id="name" name="name" defaultValue="Kitchen" />
+                                <Input id="name" name="name" defaultValue="Kitchen" required />
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="descr">Description</Label>
-                                <Input id="descr" name="descr" defaultValue="A well lit kitchen in need of painting" />
+                                <Input id="descr" name="descr" defaultValue="A well lit kitchen in need of painting" required/>
+                            </div>
+                        </div>)
+        setFirstSet(false)
+    }
+    // For Items
+    if (props.itemType.toLowerCase() == "item" && firstSet){
+        setTextforTitle(<>{`Create a new ${props.itemType}`}</>)
+        setTextforDescription(<>{`Create a new ${props.itemType} with this form. Click Save when finished`}</>)
+        setTextforContent(<div className="grid gap-4">
+                                <Input type="hidden" id="room_id" name="room_id" value={props.parentId} />
+                            <div className="grid gap-3">
+                                <Label htmlFor="name">Name</Label>
+                                <Input id="name" name="name" defaultValue="Television" required/>
+                            </div>
+                            <div className="grid gap-3">
+                                <Label htmlFor="descr">Description</Label>
+                                <Input id="descr" name="description" defaultValue="A 50 inch television in perfect condition" />
+                            </div>
+                            <div className="grid gap-3">
+                                <Label htmlFor="descr">Url for image</Label>
+                                <Input id="image_url" name="image_url" defaultValue="" />
                             </div>
                         </div>)
         setFirstSet(false)
@@ -91,15 +156,18 @@ export default function AddDialog(props){
                     </DialogHeader>
                     {textforContent}
                     <DialogFooter className={`py-2`}>
-                        <DialogClose asChild>
+                        {!errorAdding && (<DialogClose asChild>
                             <Button variant="outline">Cancel</Button>
-                        </DialogClose>
+                        </DialogClose>)}
                         {isItemAdded && (
                         <DialogClose asChild onClick={props.refresh}>
                             <Button >Go back</Button>
                         </DialogClose>
                         )}
-
+                        {!isItemAdded && errorAdding && (                        
+                            <DialogClose asChild onClick={resetStates}>
+                                <Button variant={`outline`} className={`font-bold`} >I understand!</Button>
+                            </DialogClose>) }
                         {!isItemAdded && !errorAdding && <Button  variant="outline" type={`submit`}>Save changes</Button>}
                     </DialogFooter>
                     </form>

@@ -14,10 +14,17 @@ export default function DeleteDialog(props){
     const [errorDeleting, setErrorDeleting] = useState(false);
     const [deletingError, setDeletingError] = useState()
     const [textforTitle, setTextforTitle] = useState(<>{`Attention! this will delete the ${props.itemType}`}</>);
-    const [textforDescription, setTextforDescription] = useState(<>{`Are you sure you want to`} <span className="text-red-600 font-bold">delete</span> {props.itemType} {props.item.id}</>)
+    const [textforDescription, setTextforDescription] = useState(<>{`Are you sure you want to`} <span className="text-red-600 font-bold">delete</span> {props.itemType}: {props.itemType.toLowerCase() != `property`? props.item.name : `${props.item.number}, ${props.item.street}, ${props.item.postcode}, ${props.item.city}`}</>)
+    function resetStates(){
+        setIsItemDeleted(false);
+        setErrorDeleting(false);
+        setDeletingError();
+        setTextforTitle(<>{`Attention! this will delete the ${props.itemType}`}</>);
+        setTextforDescription(<>{`Are you sure you want to`} <span className="text-red-600 font-bold">delete</span> {props.itemType}: {props.itemType.toLowerCase() != `property`? props.item.name : `${props.item.number}, ${props.item.street}, ${props.item.postcode}, ${props.item.city}`}</>);
+    }
     async function deleteItem(item, itemTyp){
         try {
-        const res = await fetch(`http://localhost:5000/api/${itemTyp.toLowerCase()}/${item.id}`, {
+        const res = await fetch(`http://localhost:5000/api/${itemTyp}/${item.id}`, {
         method: "DELETE"
         });
 
@@ -29,13 +36,21 @@ export default function DeleteDialog(props){
         setIsItemDeleted(true);
         setErrorDeleting(false);
         setTextforTitle(<>{`Deleted successfully!`}</>);
-        setTextforDescription(
+        if(itemTyp != `property`){setTextforDescription(
         <>
-            {`${itemTyp.charAt(0).toUpperCase() + itemTyp.slice(1)} ${
-            item.id
-            } deleted successfully`}
+            {`${itemTyp.charAt(0).toUpperCase() + itemTyp.slice(1)}: ${
+            item.name
+            } - deleted successfully`}
         </>
         );
+        }
+        else{
+            setTextforDescription(
+                <>
+                {`${itemTyp.charAt(0).toUpperCase() + itemTyp.slice(1)}: ${item.number}, ${item.street}, ${item.postcode}, ${item.city} - deleted successfully`}
+                </>
+            )
+        }
         setTimeout(()=>{
             props.refresh()
         },2000);
@@ -43,10 +58,17 @@ export default function DeleteDialog(props){
         
         
         } catch (error) {
-            console.log(`oh no`)
+            console.log(error)
             setErrorDeleting(true);
             setDeletingError(error.message);
             setTextforTitle(<>{`Error deleting ${itemTyp} `}</>);
+            if(itemTyp != `property`)
+                {
+                    setTextforDescription(<>{`Could not delete ${item.name} - ${deletingError}`}</>)
+                }else{
+                    setTextforDescription(<>{`Could not delete ${item.number}, ${item.street}, ${item.postcode}, ${item.city}. - ${deletingError}`}</>)
+                }
+                
             if(error.message == 405){
                 setTextforDescription(<>{`The ${itemTyp.toLowerCase()} contains elements, please delete them first`}</>);
             }
@@ -70,9 +92,9 @@ export default function DeleteDialog(props){
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-2">
                     <DialogClose asChild>
-                        {isItemDeleted ? <Button onClick={props.refresh}>Go back</Button> : <Button >Go back</Button>}
+                        {isItemDeleted ? <Button onClick={props.refresh}>Go back</Button> : <Button onClick={resetStates} >Go back</Button>}
                     </DialogClose>
-                    {!isItemDeleted && !errorDeleting && <Button onClick={()=>deleteItem(props.item, props.itemType)} variant={`destructive`}>Delete</Button>}
+                    {!isItemDeleted && !errorDeleting && <Button onClick={()=>deleteItem(props.item, props.itemType.toLowerCase())} variant={`destructive`}>Delete</Button>}
                 </div>
             </DialogContent>
         </Dialog>
