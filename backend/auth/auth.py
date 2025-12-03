@@ -175,7 +175,9 @@ def is_user_authorized(token, user_type):
             return False
     except:
         return False
-    
+"""
+Decorator to make sure that users are authorized to carry out operations
+"""
 def authorize(user_type):
     def decorator(f):
         @wraps(f)
