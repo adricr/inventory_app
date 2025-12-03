@@ -9,6 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "./button";
+import Link from "next/link";
 export default function DeleteDialog(props){
     const [isItemDeleted, setIsItemDeleted] = useState(false);
     const [errorDeleting, setErrorDeleting] = useState(false);
@@ -25,6 +26,7 @@ export default function DeleteDialog(props){
     async function deleteItem(item, itemTyp){
         try {
         const res = await fetch(`http://localhost:5000/api/${itemTyp}/${item.id}`, {
+        credentials: "include",
         method: "DELETE"
         });
 
@@ -70,6 +72,9 @@ export default function DeleteDialog(props){
                 
             if(error.message == 405){
                 setTextforDescription(<>{`The ${itemTyp.toLowerCase()} contains elements, please delete them first`}</>);
+            }
+            if(error.message == 401){
+                setTextforDescription(<><div>{`You are unauthorized to delete this`}</div><Link className="font-black text-green-600" href={`/login`}>Log in</Link></>);
             }
         }
     }

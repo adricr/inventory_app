@@ -19,7 +19,11 @@ export default function Property(props){
     const [property, setProperty]= useState(null);
     const[isPropertyLoading, setPropertyLoading] = useState(true);
     function getProperty(){
-        fetch(`http://localhost:5000/api/property/${props.propertyId}`)
+        fetch(`http://localhost:5000/api/property/${props.propertyId}`,
+            {
+                credentials:"include"
+            }
+        )
             .then(response => {
                 if (!response.ok) {
                 return response.json()
@@ -31,9 +35,13 @@ export default function Property(props){
                 setPropertyLoading(false)
             })
             .catch(error => {
-                setPropertyLoading(false)
-                setProperty({error: `There's an issue with the backend!`})
-                console.error("Fetch error:", error);
+                if(error.message = 401){
+                    setPropertyLoading(false)
+                    setProperty({error: <><div>{`You are unauthorized to see this content`}</div><Link href={`/login`}>Log in</Link></>})
+                }else{
+                    setPropertyLoading(false)
+                    setProperty({error: <>{`There's an issue with the backend!`}</>})
+                }
             });
     }
     useEffect(()=>{

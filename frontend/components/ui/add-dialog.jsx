@@ -10,6 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "./button";
+import Link from "next/link";
 import { Input } from "./input";
 import { Label } from "./label";
 export default function AddDialog(props){
@@ -32,11 +33,12 @@ export default function AddDialog(props){
         try {
             const res = await fetch(`http://localhost:5000/api/${props.itemType.toLowerCase()}`, {
                 method: "POST",
+                credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
             });
             if (!res.ok) {
-                throw new Error(`Response status: ${res.status}`);
+                throw new Error(res.status);
             }
 
             const data = await res.json();
@@ -59,6 +61,11 @@ export default function AddDialog(props){
             setTextforContent(<>{`${props.itemType} was not created, please reload page and try again`}</>);
             seterrorAdding(true);
             setaddingError("Something went wrong: " + e.message);
+            if(e.message == 401){
+                setTextforDescription(<>{`You are not authorized to create ${props.itemType}`}</>)
+                setTextforContent(<>{`${props.itemType} was not created, please reload page or `}<Link className="font-black text-green-600" href={`/login`} >Log in</Link></>);
+            }
+            console.log(e.message)
         }
     }
     // We Create here the form's inputs and dialog prompts for each type

@@ -12,7 +12,6 @@ import {
   ItemTitle,
 } from "@/components/ui/item"
 import Link from "next/link";
-
 export default function dashboard(){
     return(
     <>
@@ -21,11 +20,11 @@ export default function dashboard(){
                 <Link href={`/property`}>
                     <Item className="flex flex-col items-center justify-center w-full">
                         <ItemHeader className="flex justify-center items-center h-full w-full">
-                        <Building className="w-full h-full" />
+                        <Building className="w-full text-accent h-full" />
                         </ItemHeader>
 
                         <ItemContent className="text-center">
-                        <ItemTitle className={`font-black text-4xl`}>Properties</ItemTitle>
+                        <ItemTitle className={`font-black  text-4xl`}>Properties</ItemTitle>
                         </ItemContent>
                     </Item>
                 </Link>
@@ -34,7 +33,7 @@ export default function dashboard(){
                 <Link href={`/reports`}>
                     <Item className="flex flex-col items-center justify-center w-full">
                         <ItemHeader className="justify-center">
-                        <ClipboardList />
+                        <ClipboardList className="text-accent" />
                         </ItemHeader>
 
                         <ItemContent className="text-center">
@@ -48,7 +47,7 @@ export default function dashboard(){
                 <Link href={`/about`}>
                     <Item className="flex flex-col items-center justify-center w-full">
                         <ItemHeader className="justify-center">
-                        <Glasses />
+                        <Glasses className="text-accent" />
                         </ItemHeader>
 
                         <ItemContent className="text-center">
