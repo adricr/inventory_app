@@ -1,6 +1,8 @@
 import datetime
+from functools import wraps
 from os import getenv
 from flask import (Blueprint, jsonify, request, session)
+from flask_cors import cross_origin
 from ..db.db import (get_db, close_db)
 import jwt
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -45,7 +47,6 @@ def registeruser():
             db_cursor.execute("INSERT INTO user (username, password, email, type) VALUES (?, ?, ?, 'USER')", (data['username'], generate_password_hash(data['password']), data['email']))
             db_con.commit()
             new_user_id = db_cursor.lastrowid
-            print(new_user_id)
             close_db()
             return jsonify(
                 {
@@ -55,7 +56,7 @@ def registeruser():
         else:
             return jsonify({"message": "username, password or email empty"}), 401
 """
-fetch("http://127.0.0.1:5000/login",
+fetch("localhost:5000/login",
 {
 method: "POST",
 headers: {"Content-type": "application/json",},
@@ -93,7 +94,9 @@ def login_user():
                            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
                            }
             user_token = jwt.encode(jwt_payload,getenv("JWT_SECRET_KEY"),"HS256")
-            return jsonify({"token": user_token}), 200
+            resp = jsonify({"message": "logged in"})
+            resp.set_cookie(key="Auth", value=user_token,expires=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15),httponly=True,secure=False,samesite="Lax")
+            return resp
 
 """
 fetch("http://127.0.0.1:5000/testtoken",
@@ -120,10 +123,12 @@ body: JSON.stringify(
     console.error("Fetch error:", error);
   });
 """
-@auth_bp.route('/testtoken', methods=['POST'])
+@auth_bp.route('/userauth', methods=['GET'])
 def test_token():
-    data = request.headers
-    return jsonify({"isAuthorized": is_user_authorized(data['Auth'],"USER")}), 200
+    token = request.cookies.get("Auth")
+    if is_user_authorized(token,"user"):
+        return jsonify({"message":"Auth ok"}),200
+    return jsonify({"message": "Auth failed"}), 401
 
 
 # Helper methods
@@ -133,7 +138,7 @@ Checks if the email is in the db
 def email_in_use(email_to_check):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f'SELECT COUNT(*) FROM user WHERE email LIKE "{email_to_check}" ' )
+    db_cursor.execute('SELECT COUNT(*) FROM user WHERE email LIKE ? ',(email_to_check,) )
     email_exists = bool(dict(db_cursor.fetchone()).get('COUNT(*)'))
     close_db()
     return email_exists
@@ -164,10 +169,22 @@ Checks if an user is authorized for an action
 def is_user_authorized(token, user_type):
     try:
         user = jwt.decode(token,getenv("JWT_SECRET_KEY"),"HS256",options={"require":["exp"],"verify_exp": True})
-
-        if user.get('type') == user_type and get_user(user.get('email')): #Check that the type is correct and the user is in the db, just to make it really secure
+        if user.get('type').lower() == user_type and get_user(user.get('email')): #Check that the type is correct and the user is in the db, just to make it really secure
             return True
         else: 
             return False
     except:
         return False
+"""
+Decorator to make sure that users are authorized to carry out operations
+"""
+def authorize(user_type):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            token = request.cookies.get("Auth")
+            if not is_user_authorized(token,user_type):
+                return jsonify({"error": "Unauthorized"}), 401
+            return f(*args,**kwargs)
+        return wrapper
+    return decorator

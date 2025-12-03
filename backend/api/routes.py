@@ -1,4 +1,5 @@
 from flask import (Blueprint, jsonify, request)
+from backend.auth.auth import authorize
 from ..db.db import (get_db, close_db)
 
 api_bp = Blueprint('api',__name__)
@@ -21,6 +22,7 @@ fetch("http://127.0.0.1:5000//api/property")
 
 """
 @api_bp.route('/property', methods=['GET'])
+@authorize("user")
 def property():
     db_con = get_db()
     db_cursor = db_con.cursor()
@@ -53,7 +55,8 @@ fetch("http://127.0.0.1:5000/api/property/new_property", {
 
 
 """
-@api_bp.route('/property/new_property', methods=['POST'])
+@api_bp.route('property', methods=['POST'])
+@authorize("user")
 def new_property():
     data = request.get_json()
     db_con = get_db()
@@ -91,10 +94,11 @@ fetch("http://127.0.0.1:5000/api/property/1")
 
 """
 @api_bp.route('/property/<int:id>', methods=['GET'])
+@authorize('user')
 def get_property(id):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM property WHERE id = {id}""")
+    db_cursor.execute("""SELECT * FROM property WHERE id = ?""",(id,))
     row = db_cursor.fetchone()
     close_db()
     if row is not None:
@@ -111,18 +115,19 @@ fetch("http://127.0.0.1:5000/api/property/2", {
 .then(data => console.log("Response:", data))
 .catch(err => console.error("Error:", err));
 """
-@api_bp.route('/property/<id>', methods=['DELETE'])
+@api_bp.route('/property/<int:id>', methods=['DELETE'])
+@authorize('user')
 def delete_property(id):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM property WHERE id = {id}""")
+    db_cursor.execute("""SELECT * FROM property WHERE id = ?""",(id,))
     row = db_cursor.fetchone()
     if row is None:
         close_db()
         return not_found(f"Property with id: {id}")
     else:
-        if get_all_rooms_from_property(id)[1] == 204: #Check that there are no rooms 
-            db_cursor.execute(f"""DELETE FROM property WHERE id = {id}""")
+        if get_all_rooms_from_property(id).status_code == 204: #Check that there are no rooms 
+            db_cursor.execute("""DELETE FROM property WHERE id = ?""",(id,))
             db_con.commit()
             close_db()
             return jsonify({"message": f"""Property with id: {id} deleted successfully"""}),204
@@ -139,6 +144,7 @@ fetch("http://127.0.0.1:5000/api/property/2/room", {
         "Content-Type": "application/json"
     },
     body: JSON.stringify({
+    property_id: 1,
     name: "Kitchen",
     descr: "A pretty well kept kitchen"
     })
@@ -157,27 +163,28 @@ fetch("http://127.0.0.1:5000/api/property/2/room", {
   });
 
 """
-@api_bp.route('property/<int:property_id>/room', methods=['POST'])
-def create_room(property_id):
+@api_bp.route('room', methods=['POST'])
+@authorize('user')
+def create_room():
     data = request.get_json()
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM property WHERE id ={property_id}""")
+    db_cursor.execute("""SELECT * FROM property WHERE id = ? """,(data["property_id"]))
     property = db_cursor.fetchone()
     if property is None:
         close_db()
-        not_found(f"""Property {property_id}""")
+        not_found(f"""Property {data["property_id"]}""")
     else:
         db_cursor.execute(""" INSERT INTO room (property_id, name, descr)
                         VALUES (?, ?, ?)""",(
-                        (property_id),
+                        (data["property_id"]),
                         (data["name"]),
                         (data["descr"])
                         ))
         db_con.commit()
         new_id = db_cursor.lastrowid
         close_db()
-        return jsonify({"id": new_id, "property_id": property_id, **data}), 201
+        return jsonify({"id": new_id, **data}), 201
 
 """
 Definition for route to get all ROOMS IN A PROPERTY, the fetch could be like:
@@ -200,28 +207,32 @@ fetch("http://127.0.0.1:5000/api/property/2/room")
 def get_all_rooms_from_property(property_id):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM property WHERE id ={property_id}""")
+    db_cursor.execute("""SELECT * FROM property WHERE id =?""",(property_id,))
     property = db_cursor.fetchone()
     if property is None:
         close_db()
         return not_found(f"""Property {property_id}""")
     else:
-        db_cursor.execute(f"""SELECT * FROM room WHERE property_id ={property_id}""")
+        db_cursor.execute("""SELECT * FROM room WHERE property_id =?""",(property_id,))
         rows = db_cursor.fetchall()
         rooms = rows_to_dict(rows)
         if rooms:
             close_db()
-            return jsonify(rooms), 200
+            resp =jsonify(rooms)
+            resp.status_code = 200
+            return resp
         else:
             close_db
-            return jsonify({"message": "No Rooms in this property"}), 204
+            resp = jsonify({"message": "No Rooms in this property"})
+            resp.status_code = 204
+            return resp
 
 """
 Definition for route to delete a room, the fetch could be like:
 fetch(`http://127.0.0.1:5000/api/property/2/room/3`, {
   method: "DELETE"
 })
-.then(async response => {
+.then(async response => {AND room_id={room_id}
   // If DELETE returns 204 (No Content), there's nothing to parse
   if (response.status === 204) {
     console.log("Room deleted successfully (204 No Content)");
@@ -236,39 +247,35 @@ fetch(`http://127.0.0.1:5000/api/property/2/room/3`, {
  
  @returns 404 if the property does not exist, 405 if the room has still items, 204 if room deleted succesfully 
 """
-@api_bp.route('property/<int:property_id>/room/<int:room_id>', methods=['DELETE'])
-def delete_room(property_id, room_id):
+@api_bp.route('room/<int:room_id>', methods=['DELETE'])
+@authorize('user')
+def delete_room(room_id):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM property WHERE id ={property_id}""")
-    property = db_cursor.fetchone()
-    # Does the property exist?
-    if property is None:
-        close_db()
-        return not_found(f"""Property {property_id}""")
+    db_cursor.execute("""SELECT * FROM room WHERE id = ?""", (room_id,))
+    room = db_cursor.fetchone()
+    # Does the room exist?
+    if room is not None:
+      room = dict(room)
+      db_cursor.execute("SELECT count(*) as n FROM item where room_id = ?",(room_id,))
+      n_items = db_cursor.fetchone()
+      n_items = dict(n_items)["n"]
+      # Does the room have items?
+      if n_items != 0:
+          return jsonify({"message": "Room contains items"}), 405
+      else:
+          db_cursor.execute("SELECT * FROM property where id = ?",(room["property_id"],))
+          property =  db_cursor.fetchone()
+          # Does the room belong inside a property? ¬¬ this check is probably unnecesary
+          if property is not None:
+              db_cursor.execute("DELETE FROM room where id = ?",(room_id,))
+              db_con.commit()
+              close_db()
+              return jsonify({"message": f"room {room_id} deleted succesfully"}), 204
+          else:
+              return jsonify({"message": "The room does not belong to a property"}), 409
     else:
-        # Does the room exist??
-        db_cursor.execute(f"""SELECT * FROM room WHERE id ={room_id}""")
-        room = db_cursor.fetchone()
-        if room is None:
-            close_db()
-            return not_found(f"""Room {room_id}""")
-        else:
-            # Is there Items in the room?????
-            db_cursor.execute(f"""SELECT * FROM item WHERE room_id = {room_id}""")
-            rows = db_cursor.fetchall()
-            rows_count = len(rows)
-            print(rows_count)
-            if rows_count != 0:
-                close_db()
-                return jsonify({"message": f"The room still has {rows_count} item(s)"}), 405
-            else:
-                db_cursor.execute(f"""DELETE FROM room WHERE id={room_id}""")
-                db_con.commit()
-                close_db()
-                return jsonify({"message": f"""Room with id: {room_id} deleted successfully"""}),204
-            # Could this have been made easier with a join??? ABSOLUTELY BUT I LOVE TECHNICAL DEBT
-
+        return not_found("room")
 # /////////////////--ITEMS--\\\\\\\\\\\\\\\\\
 """
 Definition for route to create an item in a room, the fetch could be like:
@@ -298,12 +305,13 @@ fetch("http://127.0.0.1:5000/api/room/2/item", {
   });
 
 """
-@api_bp.route('room/<int:room_id>/item', methods=['POST'])
-def create_item(room_id):
+@api_bp.route('item', methods=['POST'])
+@authorize('user')
+def create_item():
     data = request.get_json()
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM room WHERE id ={room_id}""")
+    db_cursor.execute("""SELECT * FROM room WHERE id = ?""",(data["room_id"],))
     room = db_cursor.fetchone()
     if room is None:
         close_db()
@@ -311,7 +319,7 @@ def create_item(room_id):
     else:
         db_cursor.execute(""" INSERT INTO item (room_id, name, description, image_url)
                 VALUES (?, ?, ?, ?)""",(
-                (room_id),
+                (data["room_id"]),
                 (data["name"]),
                 (data["description"]),
                 (data["image_url"])
@@ -319,7 +327,7 @@ def create_item(room_id):
         db_con.commit()
         new_id = db_cursor.lastrowid
         close_db()
-        return jsonify({"id": new_id, "room_id": room_id, **data}), 201
+        return jsonify({"id": new_id, **data}), 201
 
 
 """
@@ -344,10 +352,10 @@ def get_all_items_from_room(room_id):
     db_con = get_db()
     db_cursor = db_con.cursor()
     #Check the room exists
-    db_cursor.execute(f"""SELECT count(*) FROM room WHERE id = {room_id}""")
+    db_cursor.execute("""SELECT count(*) FROM room WHERE id = ?""",(room_id,))
     room_exists = bool(dict(db_cursor.fetchone()).get('count(*)')) #if count is 1 or more it will be true
     if room_exists:
-        db_cursor.execute(f"""SELECT * FROM item WHERE room_id ={room_id}""")
+        db_cursor.execute("""SELECT * FROM item WHERE room_id =?""",(room_id,))
         items = rows_to_dict(db_cursor.fetchall())
         close_db()
         if items:
@@ -377,17 +385,18 @@ fetch("http://127.0.0.1:5000/api/room/2/item/2", {
   });
 
 """
-@api_bp.route('room/<int:room_id>/item/<int:item_id>', methods=['DELETE'])
-def delete_item(room_id,item_id):
+@api_bp.route('item/<int:item_id>', methods=['DELETE'])
+@authorize('user')
+def delete_item(item_id):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM item WHERE id ={item_id} AND room_id={room_id}""")
+    db_cursor.execute("""SELECT * FROM item WHERE id = ?""",(item_id,))
     item = db_cursor.fetchone()
     if item is None:
         close_db()
         return jsonify({"message":"item not found"}), 404
     else:
-        db_cursor.execute(f"""DELETE FROM item WHERE id={item_id} AND room_id={room_id}""")
+        db_cursor.execute("""DELETE FROM item WHERE id=?""",(item_id,))
         db_con.commit()
         close_db()
         return jsonify({"message":f"Item {item_id} Deleted Successfully"}), 204
