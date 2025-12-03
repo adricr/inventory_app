@@ -1,6 +1,4 @@
 from flask import (Blueprint, jsonify, request)
-from flask_cors import cross_origin
-
 from backend.auth.auth import authorize
 from ..db.db import (get_db, close_db)
 
@@ -100,7 +98,7 @@ fetch("http://127.0.0.1:5000/api/property/1")
 def get_property(id):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM property WHERE id = {id}""")
+    db_cursor.execute("""SELECT * FROM property WHERE id = ?""",(id,))
     row = db_cursor.fetchone()
     close_db()
     if row is not None:
@@ -122,14 +120,14 @@ fetch("http://127.0.0.1:5000/api/property/2", {
 def delete_property(id):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM property WHERE id = {id}""")
+    db_cursor.execute("""SELECT * FROM property WHERE id = ?""",(id,))
     row = db_cursor.fetchone()
     if row is None:
         close_db()
         return not_found(f"Property with id: {id}")
     else:
         if get_all_rooms_from_property(id).status_code == 204: #Check that there are no rooms 
-            db_cursor.execute(f"""DELETE FROM property WHERE id = {id}""")
+            db_cursor.execute("""DELETE FROM property WHERE id = ?""",(id,))
             db_con.commit()
             close_db()
             return jsonify({"message": f"""Property with id: {id} deleted successfully"""}),204
@@ -209,13 +207,13 @@ fetch("http://127.0.0.1:5000/api/property/2/room")
 def get_all_rooms_from_property(property_id):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f"""SELECT * FROM property WHERE id ={property_id}""")
+    db_cursor.execute("""SELECT * FROM property WHERE id =?""",(property_id,))
     property = db_cursor.fetchone()
     if property is None:
         close_db()
         return not_found(f"""Property {property_id}""")
     else:
-        db_cursor.execute(f"""SELECT * FROM room WHERE property_id ={property_id}""")
+        db_cursor.execute("""SELECT * FROM room WHERE property_id =?""",(property_id,))
         rows = db_cursor.fetchall()
         rooms = rows_to_dict(rows)
         if rooms:
@@ -278,36 +276,6 @@ def delete_room(room_id):
               return jsonify({"message": "The room does not belong to a property"}), 409
     else:
         return not_found("room")
-      
-    # db_cursor.execute(f"""SELECT * FROM property WHERE id ={property_id}""")
-    # property = db_cursor.fetchone()
-    # # Does the property exist?
-    # if property is None:
-    #     close_db()
-    #     return not_found(f"""Property {property_id}""")
-    # else:
-    #     # Does the room exist??
-    #     db_cursor.execute(f"""SELECT * FROM room WHERE id ={room_id}""")
-    #     room = db_cursor.fetchone()
-    #     if room is None:
-    #         close_db()
-    #         return not_found(f"""Room {room_id}""")
-    #     else:
-    #         # Is there Items in the room?????
-    #         db_cursor.execute(f"""SELECT * FROM item WHERE room_id = {room_id}""")
-    #         rows = db_cursor.fetchall()
-    #         rows_count = len(rows)
-    #         print(rows_count)
-    #         if rows_count != 0:
-    #             close_db()
-    #             return jsonify({"message": f"The room still has {rows_count} item(s)"}), 405
-    #         else:
-    #             db_cursor.execute(f"""DELETE FROM room WHERE id={room_id}""")
-    #             db_con.commit()
-    #             close_db()
-    #             return jsonify({"message": f"""Room with id: {room_id} deleted successfully"""}),204
-            # Could this have been made easier with a join??? ABSOLUTELY BUT I LOVE TECHNICAL DEBT
-
 # /////////////////--ITEMS--\\\\\\\\\\\\\\\\\
 """
 Definition for route to create an item in a room, the fetch could be like:
@@ -384,10 +352,10 @@ def get_all_items_from_room(room_id):
     db_con = get_db()
     db_cursor = db_con.cursor()
     #Check the room exists
-    db_cursor.execute(f"""SELECT count(*) FROM room WHERE id = {room_id}""")
+    db_cursor.execute("""SELECT count(*) FROM room WHERE id = ?""",(room_id,))
     room_exists = bool(dict(db_cursor.fetchone()).get('count(*)')) #if count is 1 or more it will be true
     if room_exists:
-        db_cursor.execute(f"""SELECT * FROM item WHERE room_id ={room_id}""")
+        db_cursor.execute("""SELECT * FROM item WHERE room_id =?""",(room_id,))
         items = rows_to_dict(db_cursor.fetchall())
         close_db()
         if items:
@@ -428,7 +396,7 @@ def delete_item(item_id):
         close_db()
         return jsonify({"message":"item not found"}), 404
     else:
-        db_cursor.execute(f"""DELETE FROM item WHERE id={item_id}""")
+        db_cursor.execute("""DELETE FROM item WHERE id=?""",(item_id,))
         db_con.commit()
         close_db()
         return jsonify({"message":f"Item {item_id} Deleted Successfully"}), 204

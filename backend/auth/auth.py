@@ -47,7 +47,6 @@ def registeruser():
             db_cursor.execute("INSERT INTO user (username, password, email, type) VALUES (?, ?, ?, 'USER')", (data['username'], generate_password_hash(data['password']), data['email']))
             db_con.commit()
             new_user_id = db_cursor.lastrowid
-            print(new_user_id)
             close_db()
             return jsonify(
                 {
@@ -139,7 +138,7 @@ Checks if the email is in the db
 def email_in_use(email_to_check):
     db_con = get_db()
     db_cursor = db_con.cursor()
-    db_cursor.execute(f'SELECT COUNT(*) FROM user WHERE email LIKE "{email_to_check}" ' )
+    db_cursor.execute('SELECT COUNT(*) FROM user WHERE email LIKE ? ',(email_to_check,) )
     email_exists = bool(dict(db_cursor.fetchone()).get('COUNT(*)'))
     close_db()
     return email_exists
